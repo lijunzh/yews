@@ -251,4 +251,3 @@ class Trainer(object):
 
     def _update_scheduler(self):
         raise(NotImplementedError)
-

@@ -8,15 +8,15 @@ def detects2table(results_dict, wl, g, include_all=False, starttime=None):
     object. Columns include starttime, endtime, p probability and s probability
     for each window. If include_all==True, all windows will be included in the
     table, (not just those detected probability > threshold). Default is False.
-    If starttime argument is specified, the starttime and endtime columns will 
+    If starttime argument is specified, the starttime and endtime columns will
     contain datetime strings. Else, these columns contain values which are the
     number of seconds since the start of the array.
-    
+
     Inputs:
         results_dict: dictionary of results from detect function
         detected_windows_only: Boolean
         starttime: obspy UTCDateTime object
-        
+
     Output:
         df: pandas data frame with probabilities of detection for each window
     '''
@@ -45,11 +45,11 @@ def find_runs_with_gaps(results_dict, max_gap):
     Find runs within results_dict from detect function where either the
     detection probability for p or s is above the probability threshold,
     allowing for max_gap 0's in between detected windows.
-    
+
     Inputs:
         results_dict: dictionary of results from yews detect function
         max_gap: max number of consecutive 0's allowable within runs
-        
+
     Output:
         run_indices: list of pairs describing start and end of run windows
     '''
@@ -88,7 +88,7 @@ def yield_pick_windows(array, fs, wl, g, results_dict, max_gap, buffer):
         if end_index > (len(array[0]) - 1):
             end_index = len(array[0]) - 1
         yield start_index, array[:, start_index:end_index]
-        
+
 def generate_picks(array, model, transform, fs, wl, g_detect, g_pick,
                    results_dict, max_gap, buffer):
     p_picks = []
@@ -110,7 +110,7 @@ def generate_picks(array, model, transform, fs, wl, g_detect, g_pick,
                 s_confs.append(pick_results['s_conf'][i])
     return {'p picks': p_picks, 'p confs': p_confs, 's picks': s_picks,
             's confs': s_confs}
-    
+
 def picks2table(picks, starttime=None):
     data = []
     cols = ('phase', 'pick time', 'confidence')

@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 import torch
-
 import yews.transforms as transforms
 import yews.transforms.functional as F
 
@@ -130,10 +129,22 @@ class TestTransformCorrectness:
         assert np.allclose(transforms.CutWaveform(100, 1900)(wav),
                            wav[:, 100:1900])
 
+    def test_select(self):
+        wav = [1, 2, 3]
+        assert np.allclose(transforms.Select(1)(wav), 2)
+        with pytest.raises(ValueError):
+            transforms.Select(1.0)
+
     def test_soft_clip(self):
         wav = np.array([-1, -0.5, 0, 0.5, 1])
         assert np.allclose(transforms.SoftClip()(wav),
                            np.array([0.26894142, 0.37754067, 0.5, 0.62245933, 0.73105858]))
+        assert np.allclose(transforms.SoftClip(1)(wav),
+                           np.array([0.26894142, 0.37754067, 0.5, 0.62245933, 0.73105858]))
+        assert np.allclose(transforms.SoftClip(1.)(wav),
+                           np.array([0.26894142, 0.37754067, 0.5, 0.62245933, 0.73105858]))
+        with pytest.raises(ValueError):
+            transforms.SoftClip('a')
 
     def test_lookup_table(self):
         with pytest.raises(ValueError):

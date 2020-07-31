@@ -74,9 +74,9 @@ def accuracy(output, target, topk=(1,)):
 def train(model, train_loader, criterion, optimizer, epoch, print_freq):
     # performance metrics
     batch_time = CumulativeMovingAverageMeter()
-    data_time = CumulativeMovingAverageMeter()
-    losses = CumulativeMovingAverageMeter()
-    top1 = CumulativeMovingAverageMeter()
+    data_time  = CumulativeMovingAverageMeter()
+    losses     = CumulativeMovingAverageMeter()
+    top1       = CumulativeMovingAverageMeter()
 
     # swtich to train mode
     model.train()

@@ -3,6 +3,7 @@ import torch
 from scipy.ndimage.filters import gaussian_filter1d
 from scipy.special import expit
 
+
 def probs2cfs(probs, sigma=3):
     cf_p = np.log10(probs[1] / (probs[0] + 1e-5))
     cf_s = np.log10(probs[2] / (probs[0] + 1e-5))
@@ -12,6 +13,7 @@ def probs2cfs(probs, sigma=3):
     cf_s = gaussian_filter1d(cf_s, sigma=sigma)
 
     return cf_p, cf_s
+
 
 def chunks(array, size, offset=0):
     """Yield successive n-sized chunks from array, starting at an offset before
@@ -23,6 +25,7 @@ def chunks(array, size, offset=0):
     for i in range(0, axis_length - offset, size - offset):
         range_end = min(i + size, axis_length)
         yield array.take(indices=range(i, range_end), axis=slice_axis)
+
 
 def compute_probs(model, transform, waveform, shape, step, batch_size=None):
     model.eval()
@@ -46,6 +49,7 @@ def compute_probs(model, transform, waveform, shape, step, batch_size=None):
     probs /= probs.sum(axis=0)
 
     return probs
+
 
 # Copyright: Fanjin Zeng, obtained from https://gist.github.com/Fnjn/b061b28c05b5b0e768c60964d2cafa8d#file-sliding_window_view-py
 def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
@@ -124,16 +128,14 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     try:
         shape = np.array(shape, np.int)
     except:
-        raise TypeError('`shape` must be a sequence of integer')
+        raise TypeError("`shape` must be a sequence of integer")
     else:
         if shape.ndim > 1:
-            raise ValueError(
-                '`shape` must be one-dimensional sequence of integer')
+            raise ValueError("`shape` must be one-dimensional sequence of integer")
         if len(x.shape) != len(shape):
-            raise ValueError(
-                "`shape` length doesn't match with input array dimensions")
+            raise ValueError("`shape` length doesn't match with input array dimensions")
         if np.any(shape <= 0):
-            raise ValueError('`shape` cannot contain non-positive value')
+            raise ValueError("`shape` cannot contain non-positive value")
 
     if step is None:
         step = np.ones(len(x.shape), np.intp)
@@ -141,20 +143,20 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
         try:
             step = np.array(step, np.intp)
         except:
-            raise TypeError('`step` must be a sequence of integer')
+            raise TypeError("`step` must be a sequence of integer")
         else:
             if step.ndim > 1:
-                raise ValueError(
-                    '`step` must be one-dimensional sequence of integer')
+                raise ValueError("`step` must be one-dimensional sequence of integer")
             if len(x.shape) != len(step):
                 raise ValueError(
-                    "`step` length doesn't match with input array dimensions")
+                    "`step` length doesn't match with input array dimensions"
+                )
             if np.any(step <= 0):
-                raise ValueError('`step` cannot contain non-positive value')
+                raise ValueError("`step` cannot contain non-positive value")
 
     o = (np.array(x.shape) - shape) // step + 1  # output shape
     if np.any(o <= 0):
-        raise ValueError('window shape cannot larger than input array shape')
+        raise ValueError("window shape cannot larger than input array shape")
 
     strides = x.strides
     view_strides = strides * step
@@ -162,7 +164,8 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
     view = np.lib.stride_tricks.as_strided(
-        x, view_shape, view_strides, subok=subok, writeable=writeable)
+        x, view_shape, view_strides, subok=subok, writeable=writeable
+    )
 
     if writeable:
         return view.copy()

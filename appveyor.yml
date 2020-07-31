@@ -60,7 +60,10 @@ install:
   # Create a conda environment using the required packages.
   - conda create -q --yes -n test python=%PYTHON_VERSION% pytorch scipy cpuonly -c pytorch
   - activate test
-  - pip install pytest pytest-cov codecov obspy
+  - conda install pytest pytest-cov codecov
+  - conda install obspy -c conda-forge
+  # Use conda instead of pip and keep it consistent with travis-ci
+  # - pip install pytest pytest-cov codecov obspy
   # Using pip instead of setup.py ensures we install a non-compressed version of the package
   # (as opposed to an egg), which is necessary to collect coverage.
   # We still get the benefit of testing an installed version over the

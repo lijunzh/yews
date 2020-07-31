@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 import yews.datasets as datasets
 import yews.transforms as transforms
 

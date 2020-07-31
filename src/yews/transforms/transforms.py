@@ -72,7 +72,7 @@ class SoftClip(BaseTransform):
         if isinstance(scale, float) or isinstance(scale, int):
             self.scale = scale
         else:
-            raise ValueError("Scale needs to be a float.")
+            raise ValueError("Scale needs to be a number.")
 
     def __call__(self, wav):
         return expit(wav * self.scale)

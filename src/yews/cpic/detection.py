@@ -2,9 +2,9 @@ import numpy as np
 import torch
 from scipy.special import expit
 
+from .utils import chunks
 from .utils import compute_probs
 from .utils import sliding_window_view
-from .utils import chunks
 
 def find_nonzero_runs(a):
     # source: https://stackoverflow.com/
