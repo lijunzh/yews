@@ -1,8 +1,10 @@
 repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v2.1.0
+    rev: v2.5.0
     hooks:
     -   id: check-added-large-files
+    -   id: check-ast
+    -   id: check-byte-order-marker
     -   id: check-builtin-literals
     -   id: check-case-conflict
     -   id: check-docstring-first
@@ -10,16 +12,33 @@ repos:
     -   id: pretty-format-json
     -   id: check-merge-conflict
     -   id: check-symlinks
+    -   id: check-toml
     -   id: check-xml
+    -   id: check-yaml
     -   id: debug-statements
+    -   id: detect-private-key
     -   id: end-of-file-fixer
     -   id: mixed-line-ending
     -   id: name-tests-test
         args: [--django]
+    -   id: requirements-txt-fixer
     -   id: sort-simple-yaml
     -   id: trailing-whitespace
 
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.4.0
+-   repo: https://github.com/pycqa/isort
+    rev: 5.5.2
     hooks:
-    -   id: reorder-python-imports
+      - id: isort
+        language: python
+
+-   repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
+        files: ^src/
+
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+    - id: flake8
