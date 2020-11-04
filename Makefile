@@ -1,8 +1,11 @@
 #!/bin/sh
 
-.PHONY: clean test anaconda pypi build wait release
+.PHONY: install clean test anaconda pypi build wait release
 
 release: test wait clean build wait upload
+
+install:
+	pip install -e .
 
 upload:
 	$(MAKE) -C anaconda upload
