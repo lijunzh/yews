@@ -2,6 +2,7 @@
 *.pth
 /rbp
 /experimental
+.vim-arsync
 
 # ctags
 tags
