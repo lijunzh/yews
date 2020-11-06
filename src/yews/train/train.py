@@ -188,7 +188,7 @@ def train_epoch(
             logger.info(
                 # "Epoch %3d time %5.1f lr = %.8f median loss = %8.6f",
                 "Epoch %3d time %5.1f lr = %.8f avg loss = %8.6f",
-                cur_epoch,
+                cur_epoch + 1,
                 elapsed_time_display,
                 get_lr(optimizer),
                 # loss_epoch.get_win_median(),
