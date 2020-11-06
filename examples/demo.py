@@ -1,8 +1,10 @@
+import numpy as np
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.data import DataLoader, random_split
+from torch.utils.data.distributed import DistributedSampler
 
 import yews.datasets as dsets
 import yews.transforms as transforms
@@ -10,20 +12,11 @@ from yews import train
 from yews.models import cpic_v1, cpic_v2, cpic_v3, cpic_v4
 from yews.train import Timer
 
-logger = train.logging.get_logger()
-use_dist = False
+use_dist = True
+num_epochs = 5
 
 
-def train_model(use_dist=False):
-
-    num_epochs = 75
-    dist_master_proc = (not use_dist) or train.distributed.is_master_proc()
-
-    train.logging.setup_logger(logger, enabled=dist_master_proc)
-    logger.info("Logging setup.")
-
-    train.setup_env()
-    logger.info("Computing env setup.")
+def build_data_loaders(distributed):
 
     waveform_transform = transforms.Compose(
         [
@@ -34,8 +27,8 @@ def train_model(use_dist=False):
     )
 
     dsets.set_memory_limit(10 * 1024 ** 3)  # first number is GB
-    dset = dsets.SCSN(
-        path="scsn/", download=False, sample_transform=waveform_transform,
+    dset = dsets.Wenchuan(
+        path="wenchuan/", download=False, sample_transform=waveform_transform,
     )
 
     # Split datasets into training and validation
@@ -44,17 +37,65 @@ def train_model(use_dist=False):
     train_set, val_set = random_split(dset, [train_length, val_length])
 
     # Prepare dataloaders
-    train_loader = DataLoader(
-        train_set, batch_size=1000, shuffle=True, num_workers=4
-    )
-    val_loader = DataLoader(
-        val_set, batch_size=2000, shuffle=False, num_workers=4
-    )
+    if distributed:
+        sampler_train = DistributedSampler(train_set) if distributed else None
+        train_loader = DataLoader(
+            train_set,
+            batch_size=500,
+            shuffle=(not sampler_train),
+            sampler=sampler_train,
+            num_workers=12,
+            pin_memory=True,
+            drop_last=True,
+        )
+        sampler_val = DistributedSampler(val_set) if distributed else None
+        val_loader = DataLoader(
+            val_set,
+            batch_size=500,
+            shuffle=False,
+            sampler=sampler_val,
+            num_workers=12,
+            pin_memory=True,
+            drop_last=False,
+        )
+    else:
+        train_loader = DataLoader(
+            train_set,
+            batch_size=1000,
+            shuffle=True,
+            num_workers=12,
+            pin_memory=True,
+            drop_last=True,
+        )
+        val_loader = DataLoader(
+            val_set,
+            batch_size=1000,
+            shuffle=False,
+            num_workers=4,
+            pin_memory=True,
+            drop_last=False,
+        )
+
+    return train_loader, val_loader
+
+
+def train_model(num_epochs, use_dist=False):
+
+    dist_master_proc = (not use_dist) or train.distributed.is_master_proc()
+
+    logger = train.get_logger()
+    train.logging.setup_logger(enabled=dist_master_proc)
+    logger.info("Logging setup.")
+
+    train.setup_env(rng_seed=1, cudnn_benchmark=True)
+    logger.info("Computing env setup.")
 
     loss_fun = CrossEntropyLoss()
-    model = cpic_v4().cuda()
-    optimizer = Adam(model.parameters(), lr=0.2)
+    model = train.setup_model(cpic_v1(), distributed=use_dist)
+    optimizer = Adam(model.parameters(), lr=0.1)
     lr_scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=2)
+
+    train_loader, val_loader = build_data_loaders(distributed=use_dist)
 
     for cur_epoch in range(0, num_epochs):
 
@@ -65,7 +106,7 @@ def train_model(use_dist=False):
             optimizer,
             cur_epoch,
             num_gpus=2,
-            log_period=20,
+            log_period=100,
         )
 
         timer = Timer(name=cur_epoch, logger=None)
@@ -80,7 +121,6 @@ def train_model(use_dist=False):
             "Epoch %3d time %6.1f lr = %.8f avg loss = %8.6f acc = %2.2f",
             cur_epoch + 1,
             elapsed_time_epoch,
-            # lr_scheduler.get_last_lr()[0],
             train.get_lr(optimizer),
             loss_epoch.get_global_avg(),
             accuracy_epoch * 100,
@@ -92,7 +132,12 @@ def train_model(use_dist=False):
 if __name__ == "__main__":
     if use_dist:
         train.distributed.multi_proc_run(
-            2, "nccl", "localhost", [10000, 65000], train_model, fun_args=(),
+            2,
+            "nccl",
+            "localhost",
+            [10000, 65000],
+            train_model,
+            fun_args=(num_epochs, use_dist),
         )
     else:
-        train_model()
+        train_model(num_epochs)
