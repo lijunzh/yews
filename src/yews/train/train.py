@@ -13,7 +13,7 @@ from .logging import get_logger
 from .meter import ScalarMeter
 from .timer import Timer
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def setup_env(
@@ -187,7 +187,7 @@ def train_epoch(
             elapsed_time_display = timer.stop()
             logger.info(
                 # "Epoch %3d time %5.1f lr = %.8f median loss = %8.6f",
-                "Epoch %3d time %5.1f lr = %.8f avg loss = %8.6f",
+                "Epoch %3d time %6.1f lr = %.8f avg loss = %8.6f",
                 cur_epoch + 1,
                 elapsed_time_display,
                 get_lr(optimizer),
