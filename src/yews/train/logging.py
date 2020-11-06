@@ -36,13 +36,15 @@ def suppress_print() -> None:
 
 
 def setup_logger(
-    logger: logging.Logger,
+    # logger: logging.Logger,
     level: int = logging.INFO,
     stdout: bool = True,
     log_file: _Path = "stdout.log",
     colored_file: bool = True,
     enabled: bool = True,
 ):
+    logger = get_logger()
+    logger.propagate = False
     # set logger level: https://docs.python.org/3/library/logging.html#levels
     logger.setLevel(logging.DEBUG)
     # format logging string
@@ -77,6 +79,12 @@ def setup_logger(
         console_handler.setFormatter(screen_formatter)
         console_handler.setLevel(level)
         logger.addHandler(console_handler)
+    else:
+        logger.handlers = [
+            h
+            for h in logger.handlers
+            if not isinstance(h, logging.StreamHandler)
+        ]
     if log_file:
         file_handler = logging.FileHandler(log_file, mode="a")
         if colored_file:
@@ -85,6 +93,12 @@ def setup_logger(
             file_handler.setFormatter(log_formatter)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
+    else:
+        logger.handlers = [
+            h
+            for h in logger.handlers
+            if not isinstance(h, logging.FileHandler)
+        ]
 
     if enabled:
         logger.debug("Logging is enabled for main process %d.", os.getpid())
