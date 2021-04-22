@@ -3,7 +3,7 @@ requires = ["setuptools >= 40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-line-length = 79
+line-length = 100
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -18,3 +18,46 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+src_paths = ["src", "test"]
+multi_line_output = 3
+include_trailing_comma = true
+skip = [
+	"./datasets",
+	"docs",
+]
+skip_glob = [
+	"*/__init__.py",
+]
+known_third_party = [
+	"fvcore",
+	"matplotlib",
+	"cv2",
+	"torch",
+	"torchvision",
+	"PIL",
+	"pycocotools",
+	"termcolor",
+	"tabulate",
+	"tqdm",
+	"scipy",
+	"psutil",
+	"pkg_resources",
+	"caffe2",
+	"onnx",
+	"black",
+	"isort",
+]
+no_lines_before = [
+ "STDLIB",
+ "THIRDPARTY",
+]
+
+[tool.pytest.ini_options]
+markers = [
+	"smoke: quick smoke tests.",
+	"gpus: tests needs gpus.",
+]
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"

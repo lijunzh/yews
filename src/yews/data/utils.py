@@ -3,13 +3,12 @@ import os
 import tarfile
 from pathlib import Path
 from urllib import request
-
 import numpy as np
 from torch.utils.model_zoo import tqdm
 
 try:
-    from obspy import read
-    from obspy import UTCDateTime
+    from obspy import UTCDateTime, read
+
     has_obspy = True
 except ModuleNotFoundError:
     has_obspy = False
@@ -19,15 +18,16 @@ except ModuleNotFoundError:
 #                           Path related utils
 #
 ###############################################################################
-def get_files_under_dir(root, pattern):
-    """Construct list of path objects given pattern under the root directory.
 
-    """
+
+def get_files_under_dir(root, pattern):
+    """Construct list of path objects given pattern under the root directory."""
     root = Path(root)
     if root.exists():
         return [p for p in root.glob(pattern) if p.is_file()]
     else:
         raise FileNotFoundError(f"Direcotry {root} does not exist.")
+
 
 ################################################################################
 #
@@ -35,11 +35,9 @@ def get_files_under_dir(root, pattern):
 #
 ################################################################################
 def stream2array(st):
-    """Convert seismic frame from obspy.Stream to numpy.ndarray.
-
-    """
+    """Convert seismic frame from obspy.Stream to numpy.ndarray."""
     if has_obspy:
-        return np.stack([tr.data[:int(np.floor(len(tr.data) / 10) * 10)] for tr in st])
+        return np.stack([tr.data[: int(np.floor(len(tr.data) / 10) * 10)] for tr in st])
     else:
         raise ModuleNotFoundError("Consider installing ObsPy for seismic I/O.")
 
@@ -64,55 +62,18 @@ def read_frame_obspy(path, **kwargs):
 
 ################################################################################
 #
-#                   Read and Write with Memory Constraints
-#
-################################################################################
-
-# dynamically change this limit by Python code.
-MEMORY_LIMIT =  2 * 1024 ** 3        # 2 GB limit
-
-def over_memory_limit(path):
-    return os.stat(path).st_size > MEMORY_LIMIT
-
-def set_memory_limit(limit):
-    global MEMORY_LIMIT
-    MEMORY_LIMIT = limit
-
-def get_memory_limit():
-    return MEMORY_LIMIT
-
-def load_npy(path, memory_limit=None):
-    default_memory_limit = get_memory_limit()
-
-    if memory_limit:
-        set_memory_limit(memory_limit)
-    print(f"Current memory limit is {sizeof_fmt(get_memory_limit())}")
-
-    if over_memory_limit(path):
-        print(f"Loading memory map of {path} into memory")
-        data = np.load(path, mmap_mode='r')
-    else:
-        print(f"Loading {path} directly into memory")
-        data = np.load(path)
-    set_memory_limit(default_memory_limit)
-
-    return data
-
-def create_npy(path, shape, dtype=np.float32):
-    return np.lib.format.open_memmap(path, mode='w+', dtype=dtype, shape=shape)
-
-################################################################################
-#
 #                           Utilities for URLs
 #
 ################################################################################
+
 
 def test_url(url):
     try:
         with request.urlopen(url) as req:
             return req
-    except:
+    except Exception:
         return None
+
 
 def gen_bar_update():
     pbar = tqdm(total=None)
@@ -125,7 +86,8 @@ def gen_bar_update():
 
     return bar_update
 
-def sizeof_fmt(num, suffix='B'):
+
+def sizeof_fmt(num, suffix="B"):
     """Get human-readable file size
 
     Args:
@@ -142,7 +104,6 @@ def sizeof_fmt(num, suffix='B'):
 
 
 class URL(object):
-
     def __init__(self, url):
         self.url = url
         req = test_url(url)
@@ -154,15 +115,18 @@ class URL(object):
             raise ValueError(f"{url} is not a valid URL or unreachable.")
 
     def get_filename(self):
-        return [a.split('=')[1] for a in self.req.info()['content-disposition'].split('; ')
-                    if a.startswith('filename=')][0].strip('"')
+        return [
+            a.split("=")[1]
+            for a in self.req.info()["content-disposition"].split("; ")
+            if a.startswith("filename=")
+        ][0].strip('"')
 
     def __repr__(self):
         return f"{self.url_filename}, {sizeof_fmt(self.size)}, from <{self.url}>"
 
     def download(self, root, filename=None):
         root = Path(root)
-        root.mkdir(parents=True, exist_ok=True)    # mkdir if not exists)
+        root.mkdir(parents=True, exist_ok=True)  # mkdir if not exists)
         if not filename:
             filename = self.url_filename
         fpath = root / filename
@@ -178,6 +142,6 @@ class URL(object):
 ################################################################################
 
 
-def extract_tar(infile, outdir='.', mode='r:*'):
+def extract_tar(infile, outdir=".", mode="r:*"):
     with tarfile.open(infile, mode=mode) as tar:
         tar.extractall(outdir)
